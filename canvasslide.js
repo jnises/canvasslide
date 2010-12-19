@@ -73,17 +73,27 @@ function Slide(canvas, images)
 
     /** The delay between frames in seconds. */
     var delay = 0.33333;
-    var lastRender = 0;
+
+    /** When the last frame was rendered. */
+    var lastRender = new Date().getTime();
 
     /**
      * Render the scene, calling callback when a transition is finished.
      */
     function render(callback)
     {
-        
+        // TODO do the rendering
+
+        // framecap
+        var now = new Date().getTime();
+        var diff = now - this.lastRender;
+        // TODO can you set closed over variables like this?
+        lastRender = now;
+        setTimeout(function(){render(callback);}, Math.max(delay - diff, 0) / 2);
     }
 
-    this.index = 0;
+    // TODO why are these public?
+    this.index = -1;
     this.transition = false;
     this.transitionStart = -1;
     this.transitionEnd = -1; // when the next image has been loaded
@@ -112,5 +122,6 @@ function Slide(canvas, images)
                                  });
     }
 
-    
+    // start rendering
+    this.next();
 }
