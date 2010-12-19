@@ -6,6 +6,7 @@
  */
 function Slide(canvas, images)
 {
+    var that = this;
     // A queue that executes commands synchronously
     var commandQueue = {
         queue: new Array(),
@@ -17,18 +18,19 @@ function Slide(canvas, images)
          */
         pushCommand: function(command)
         {
-            this.queue.push(command);
+            var that = this;
+            that.queue.push(command);
             function handleCommand()
             {
-                if(!this.current)
+                if(!that.current)
                 {
-                    this.current = this.queue.shift();
-                    this.current(function()
+                    that.current = that.queue.shift();
+                    that.current(function()
                                  {
                                      setTimeout(function()
                                                 {
-                                                    // TODO problems with this here?
-                                                    this.current = null;
+                                                    // TODO problems with that here?
+                                                    that.current = null;
                                                     handleCommand();
                                                 }, 0);
                                  });
@@ -52,6 +54,8 @@ function Slide(canvas, images)
                 img.data = tmpim;
                 callback(img);
             }
+            // TODO need to handle errors here
+
             tmpim.src = img.url;
         }
     }
@@ -71,6 +75,12 @@ function Slide(canvas, images)
                   });
     }
 
+    // TODO why are these public?
+    that.index = -1;
+    that.transition = false;
+    that.transitionStart = -1;
+    that.transitionEnd = -1; // when the next image has been loaded
+
     /** The delay between frames in seconds. */
     var delay = 0.33333;
 
@@ -82,46 +92,50 @@ function Slide(canvas, images)
      */
     function render(callback)
     {
-        // TODO do the rendering
-
-        // framecap
         var now = new Date().getTime();
-        var diff = now - this.lastRender;
-        // TODO can you set closed over variables like this?
-        lastRender = now;
-        setTimeout(function(){render(callback);}, Math.max(delay - diff, 0) / 2);
+
+        var c = canvas.getContext("2d");
+        if(images[that.index].data) c.drawImage(images[that.index].data, now - that.transitionStart, 0);
+
+        if((now - that.transitionStart) > 5)
+        {
+            that.transition = false;
+        } else {
+            // framecap
+            var diff = now - that.lastRender;
+            // TODO can you set closed over variables like this?
+            lastRender = now;
+            setTimeout(function(){render(callback);}, Math.max(delay - diff, 0) / 2);
+        }
     }
 
-    // TODO why are these public?
-    this.index = -1;
-    this.transition = false;
-    this.transitionStart = -1;
-    this.transitionEnd = -1; // when the next image has been loaded
-
-    this.next = function()
+    that.next = function()
     {
         commandQueue.pushCommand(function(callback)
                                  {
                                      // load the next image
-                                     this.index = this.index < (images.length - 1) ? this.index + 1 : images.length - 1;
-                                     loadImageNumber(this.index);
+                                     that.index = that.index < (images.length - 1) ? that.index + 1 : images.length - 1;
+                                     loadImageNumber(that.index);
                                      // trigger transition
+                                     that.transition = true;
+                                     that.transitionStart = new Date().getTime();
                                      setTimeout(function(){render(callback);}, 0);
                                  });
     }
 
-    this.prev = function()
+    that.prev = function()
     {
         commandQueue.pushCommand(function(callback)
                                  {
-                                     this.index = this.index > 0 ? this.index - 1 : this.index;
-                                     loadImageNumber(this.index);
+                                     that.index = that.index > 0 ? that.index - 1 : that.index;
+                                     loadImageNumber(that.index);
                                      // trigger transition
+                                     that.transition = true;
+                                     that.transitionStart = new Date().getTime();
                                      setTimeout(function(){render(callback);}, 0);
-                                     // TODO make sure transition calls callback when it is done
                                  });
     }
 
     // start rendering
-    this.next();
+    that.next();
 }
