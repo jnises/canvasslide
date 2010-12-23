@@ -6,7 +6,19 @@
  */
 function Slide(canvas, images)
 {
+    /**
+     * Log stuff.
+     */
+    function log(message)
+    {
+        // TODO handle logging better, can you get file, line printouts? exceptions?
+        alert(message);
+    }
+
     var that = this;
+    var c = null;
+    if(canvas.getContext) c = canvas.getContext("2d");
+
     // A queue that executes commands synchronously
     var commandQueue = {
         queue: new Array(),
@@ -51,10 +63,16 @@ function Slide(canvas, images)
             var tmpim = new Image();
             tmpim.onload = function()
             {
-                img.data = tmpim;
-                callback(img);
+                // clone img
+                var newim = $.extend({}, img);
+                newim.data = tmpim;                
+                callback(newim);
             }
-            // TODO need to handle errors here
+
+            tmpim.onerror = function()
+            {
+                callback(null);
+            }
 
             tmpim.src = img.url;
         }
@@ -68,18 +86,21 @@ function Slide(canvas, images)
         loadImage(images[index], 
                   function(img)
                   {
-                      // TODO this is unnecessary since we will already have
-                      // mutated images[index] at this point. But it is the
-                      // mutation that should be removed, not this setting.
-                      images[index] = img;
+                      if(img)
+                      {
+                          images[index] = img;
+                      }
+                      else
+                      {
+                          log("error: no image found for index: " + index);
+                      }
                   });
     }
 
-    // TODO why are these public?
-    that.index = -1;
-    that.transition = false;
-    that.transitionStart = -1;
-    that.transitionEnd = -1; // when the next image has been loaded
+    var index = -1;
+    var transition = false;
+    var transitionStart = -1;
+    var transitionEnd = -1; // when the next image has been loaded
 
     /** The delay between frames in seconds. */
     var delay = 0.33333;
@@ -92,48 +113,59 @@ function Slide(canvas, images)
      */
     function render(callback)
     {
-        var now = new Date().getTime();
-
-        var c = canvas.getContext("2d");
-        if(images[that.index].data) c.drawImage(images[that.index].data, now - that.transitionStart, 0);
-
-        if((now - that.transitionStart) > 5)
+        if(c)
         {
-            that.transition = false;
-        } else {
-            // framecap
-            var diff = now - that.lastRender;
-            // TODO can you set closed over variables like this?
-            lastRender = now;
-            setTimeout(function(){render(callback);}, Math.max(delay - diff, 0) / 2);
+            document.writeln("rendering\n");
+            var now = new Date().getTime();
+
+            if(images[index].data) c.drawImage(images[index].data, now - transitionStart, 0);
+
+            if((now - transitionStart) > 5)
+            {
+                transition = false;
+            } 
+            else 
+            {
+                // framecap
+                var diff = now - that.lastRender;
+
+                lastRender = now;
+                setTimeout(function(){render(callback);}, Math.max(delay - diff, 0) / 2);
+            }
         }
     }
 
     that.next = function()
     {
-        commandQueue.pushCommand(function(callback)
-                                 {
-                                     // load the next image
-                                     that.index = that.index < (images.length - 1) ? that.index + 1 : images.length - 1;
-                                     loadImageNumber(that.index);
-                                     // trigger transition
-                                     that.transition = true;
-                                     that.transitionStart = new Date().getTime();
-                                     setTimeout(function(){render(callback);}, 0);
-                                 });
+        if(c)
+        {
+            commandQueue.pushCommand(function(callback)
+                                     {
+                                         // load the next image
+                                         index = index < (images.length - 1) ? index + 1 : images.length - 1;
+                                         loadImageNumber(index);
+                                         // trigger transition
+                                         transition = true;
+                                         transitionStart = new Date().getTime();
+                                         setTimeout(function(){render(callback);}, 0);
+                                     });
+        }
     }
 
     that.prev = function()
     {
-        commandQueue.pushCommand(function(callback)
-                                 {
-                                     that.index = that.index > 0 ? that.index - 1 : that.index;
-                                     loadImageNumber(that.index);
-                                     // trigger transition
-                                     that.transition = true;
-                                     that.transitionStart = new Date().getTime();
-                                     setTimeout(function(){render(callback);}, 0);
-                                 });
+        if(c)
+        {
+            commandQueue.pushCommand(function(callback)
+                                     {
+                                         index = index > 0 ? index - 1 : index;
+                                         loadImageNumber(index);
+                                         // trigger transition
+                                         transition = true;
+                                         transitionStart = new Date().getTime();
+                                         setTimeout(function(){render(callback);}, 0);
+                                     });
+        }
     }
 
     // start rendering
