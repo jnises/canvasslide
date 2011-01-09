@@ -18,6 +18,10 @@ function Slide(canvas, images)
     var that = this;
     var c = null;
     if(canvas.getContext) c = canvas.getContext("2d");
+    if(!c)
+    {
+        log("error: no canvas capabilities present");
+    }
 
     // A queue that executes commands synchronously
     var commandQueue = {
@@ -37,15 +41,19 @@ function Slide(canvas, images)
                 if(!that.current)
                 {
                     that.current = that.queue.shift();
-                    that.current(function()
-                                 {
-                                     setTimeout(function()
-                                                {
-                                                    // TODO problems with that here?
-                                                    that.current = null;
-                                                    handleCommand();
-                                                }, 0);
-                                 });
+                    // if there are commands in the queue, perform them
+                    if(that.current)
+                    {
+                        that.current(function()
+                                     {
+                                         setTimeout(function()
+                                                    {
+                                                        // TODO problems with that here?
+                                                        that.current = null;
+                                                        handleCommand();
+                                                    }, 0);
+                                     });
+                    }
                 }
             }
 
@@ -123,6 +131,8 @@ function Slide(canvas, images)
             if((now - transitionStart) > 5)
             {
                 transition = false;
+                // the transition is finished, call callback
+                callback();
             } 
             else 
             {
