@@ -11,8 +11,19 @@ function Slide(canvas, images)
      */
     function log(message)
     {
-        // TODO handle logging better, can you get file, line printouts? exceptions?
+        // TODO handle logging better, can you get file, line
+        // printouts? exceptions?
         alert(message);
+    }
+
+    /**
+     * Assert stuff
+     */
+    function assert(test)
+    {
+        // TODO this is a stupid way to do assertions, we need proper
+        // error messages.
+        if(!test) log("assertion error");
     }
 
     var that = this;
@@ -117,16 +128,51 @@ function Slide(canvas, images)
     var lastRender = new Date().getTime();
 
     /**
+     * Return an array of two elements specifying the width and height
+     * of image scaled to fit into canvas.
+     */
+    function fitInCanvas(canvas, image)
+    {
+        var width, height;
+        
+        assert(image.height > 0);
+        assert(image.width > 0);
+        var aspect = image.width / image.height;
+
+        // first try fitting it horizontally
+        width = canvas.width;
+        height = width / aspect;
+
+        if(height > canvas.height)
+        {
+            // scale vertically instead
+            height = canvas.height;
+            width = height * aspect;
+        }
+
+        return [width, height];
+    }
+
+    /**
      * Render the scene, calling callback when a transition is finished.
      */
     function render(callback)
     {
         if(c)
         {
-            document.writeln("rendering\n");
+            //document.writeln("rendering\n");
             var now = new Date().getTime();
 
-            if(images[index].data) c.drawImage(images[index].data, now - transitionStart, 0);
+            c.clearRect(0, 0, c.width, c.height);
+
+            if(images[index].data)
+            {
+                // TODO we could calculate the desired image size when
+                // loading it instead of doing it all the time
+                var size = fitInCanvas(canvas, images[index].data);
+                
+                c.drawImage(images[index].data, (canvas.width - size[0]) / 2, (canvas.height - size[1]) / 2, size[0], size[1]);
+            }
 
             if((now - transitionStart) > 5)
             {
