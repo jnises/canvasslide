@@ -119,7 +119,8 @@ function Slide(canvas, images)
     var index = -1;
     var transition = false;
     var transitionStart = -1;
-    var transitionEnd = -1; // when the next image has been loaded
+    //var transitionEnd = -1; // when the next image has been loaded
+    var fadeInStart = -1; // when the next image has been loaded
 
     /** The delay between frames in seconds. */
     var delay = 0.33333;
@@ -127,8 +128,15 @@ function Slide(canvas, images)
     /** When the last frame was rendered. */
     var lastRender = new Date().getTime();
 
+    // enum to specify the transition direction
+    var directionEnum = {FORWARD: 0,
+                         BACKWARD: 1};
+
+    // which direction the transition is
+    var direction = directionEnum.FORWARD;
+
     /**
-     * Return an array of two elements specifying the width and height
+     * @return an array of two elements specifying the width and height
      * of image scaled to fit into canvas.
      */
     function fitInCanvas(canvas, image)
@@ -153,6 +161,13 @@ function Slide(canvas, images)
         return [width, height];
     }
 
+    // smoothstep from 0 to 1
+    function smoothstep(t)
+    {
+        t = t > 1 ? 1 : (t < 0 ? 0 : t);
+        return t * t * (3 - 2 * t);
+    }
+
     /**
      * Render the scene, calling callback when a transition is finished.
      */
@@ -165,13 +180,40 @@ function Slide(canvas, images)
 
             c.clearRect(0, 0, c.width, c.height);
 
+            var lastIndex;
+            if(direction == directionEnum.FORWARD) lastIndex = index - 1;
+            else if(direction == directionEnum.BACKWARD) lastIndex = index + 1;
+
+            if(lastIndex < 0 || lastIndex >= images.length) lastIndex = -1;
+
+            var slideDirection = direction == directionEnum.FORWARD ? 1 : -1;
+
+            // TODO redo the slides so that they are performed using
+            // smoothstep and in a certain time interval
+
+            // draw the old image slideout
+            if(lastIndex > 0)
+            {
+                if(images[lastIndex].data)
+                {
+                    var size = fitInCanvas(canvas, images[lastIndex].data);
+                    
+                    c.drawImage(images[lastIndex].data, (canvas.width - size[0]) / 2 - slideDirection * canvas.width / 2 * Math.pow(now - transitionStart, 2), (canvas.height - size[1]) / 2, size[0], size[1]);
+                }
+            }
+
+            // draw the new image slidein
             if(images[index].data)
             {
+                // if fadeInTime is -1 this is the first frame when the next image is loaded
+                if(fadeInTime == -1)
+                    fadeInTime = new Data().getTime();
+
                 // TODO we could calculate the desired image size when
                 // loading it instead of doing it all the time
                 var size = fitInCanvas(canvas, images[index].data);
                 
-                c.drawImage(images[index].data, (canvas.width - size[0]) / 2, (canvas.height - size[1]) / 2, size[0], size[1]);
+                c.drawImage(images[index].data, (canvas.width - size[0]) / 2 + slideDirection * canvas.width / 2 *  (fadeInTime / now), (canvas.height - size[1]) / 2, size[0], size[1]);
             }
 
             if((now - transitionStart) > 5)
@@ -197,12 +239,14 @@ function Slide(canvas, images)
         {
             commandQueue.pushCommand(function(callback)
                                      {
+                                         direction = directionEnum.FORWARD;
                                          // load the next image
                                          index = index < (images.length - 1) ? index + 1 : images.length - 1;
                                          loadImageNumber(index);
                                          // trigger transition
-                                         transition = true;
                                          transitionStart = new Date().getTime();
+                                         // reset fadeInStart
+                                         fadeInStart = -1;
                                          setTimeout(function(){render(callback);}, 0);
                                      });
         }
@@ -214,11 +258,12 @@ function Slide(canvas, images)
         {
             commandQueue.pushCommand(function(callback)
                                      {
+                                         direction = directionEnum.BACKWARD;
                                          index = index > 0 ? index - 1 : index;
                                          loadImageNumber(index);
                                          // trigger transition
-                                         transition = true;
                                          transitionStart = new Date().getTime();
+                                         fadeInStart = -1;
                                          setTimeout(function(){render(callback);}, 0);
                                      });
         }
