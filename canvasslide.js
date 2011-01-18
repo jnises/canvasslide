@@ -6,7 +6,7 @@
  */
 function Slide(canvas, images)
 {
-    var enable_log = true;
+    var enable_log = false;
     /**
      * Log stuff.
      */
@@ -18,7 +18,6 @@ function Slide(canvas, images)
             if(canvasdiv.append) canvasdiv.prepend(message + "<br/>\n");
             // TODO handle logging better, can you get file, line
             // printouts? exceptions?
-            //alert(message);
         }
     }
 
@@ -142,7 +141,7 @@ function Slide(canvas, images)
     var direction = directionEnum.FORWARD;
 
     // how long a slide should be in microseconds
-    var slideTime = 1000;
+    var slideTime = 500;
 
     var fadeInTime = -1;
 
