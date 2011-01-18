@@ -6,14 +6,20 @@
  */
 function Slide(canvas, images)
 {
+    var enable_log = true;
     /**
      * Log stuff.
      */
     function log(message)
     {
-        // TODO handle logging better, can you get file, line
-        // printouts? exceptions?
-        alert(message);
+        if(enable_log)
+        {
+            var canvasdiv = $("#logdiv");
+            if(canvasdiv.append) canvasdiv.prepend(message + "<br/>\n");
+            // TODO handle logging better, can you get file, line
+            // printouts? exceptions?
+            //alert(message);
+        }
     }
 
     /**
@@ -118,7 +124,7 @@ function Slide(canvas, images)
 
     var index = -1;
     var transition = false;
-    var transitionStart = -1;
+    var transitionStart = -1; // when the transition started
     //var transitionEnd = -1; // when the next image has been loaded
     var fadeInStart = -1; // when the next image has been loaded
 
@@ -134,6 +140,11 @@ function Slide(canvas, images)
 
     // which direction the transition is
     var direction = directionEnum.FORWARD;
+
+    // how long a slide should be in microseconds
+    var slideTime = 1000;
+
+    var fadeInTime = -1;
 
     /**
      * @return an array of two elements specifying the width and height
@@ -168,6 +179,11 @@ function Slide(canvas, images)
         return t * t * (3 - 2 * t);
     }
 
+    function clamp(t, min, max)
+    {
+        return Math.min(1, Math.max(0, t));
+    }
+
     /**
      * Render the scene, calling callback when a transition is finished.
      */
@@ -178,7 +194,10 @@ function Slide(canvas, images)
             //document.writeln("rendering\n");
             var now = new Date().getTime();
 
-            c.clearRect(0, 0, c.width, c.height);
+            c.clearRect(0, 0, canvas.width, canvas.height);
+
+            //c.fillStyle = "rgb(0,0,0)";
+            //c.fillRect (0, 0, canvas.width, canvas.height);
 
             var lastIndex;
             if(direction == directionEnum.FORWARD) lastIndex = index - 1;
@@ -188,17 +207,29 @@ function Slide(canvas, images)
 
             var slideDirection = direction == directionEnum.FORWARD ? 1 : -1;
 
+            var slideComplete = false;
+
             // TODO redo the slides so that they are performed using
             // smoothstep and in a certain time interval
 
             // draw the old image slideout
-            if(lastIndex > 0)
+            if(lastIndex >= 0)
             {
                 if(images[lastIndex].data)
                 {
                     var size = fitInCanvas(canvas, images[lastIndex].data);
+                    var x;
+
+                    // first center the image
+                    x = (canvas.width - size[0]) / 2;
                     
-                    c.drawImage(images[lastIndex].data, (canvas.width - size[0]) / 2 - slideDirection * canvas.width / 2 * Math.pow(now - transitionStart, 2), (canvas.height - size[1]) / 2, size[0], size[1]);
+                    // how much of the slide has been performed, 0 for nothing 1 for all
+                    var slideDone = clamp((now - transitionStart) / slideTime, 0, 1);
+
+                    // perform the slide, a slide should be the total width of the canvas
+                    x += (-slideDirection * canvas.width) * smoothstep(slideDone);
+
+                    c.drawImage(images[lastIndex].data, x, (canvas.height - size[1]) / 2, size[0], size[1]);
                 }
             }
 
@@ -207,16 +238,38 @@ function Slide(canvas, images)
             {
                 // if fadeInTime is -1 this is the first frame when the next image is loaded
                 if(fadeInTime == -1)
-                    fadeInTime = new Data().getTime();
+                    fadeInTime = new Date().getTime();
 
-                // TODO we could calculate the desired image size when
-                // loading it instead of doing it all the time
                 var size = fitInCanvas(canvas, images[index].data);
+                var x;
+
+                // first center the image
+                x = (canvas.width - size[0]) / 2;
+
+                log("first x: " + x);
+                log("canvas.width: " + canvas.width);
+                log("size: " + size);
                 
-                c.drawImage(images[index].data, (canvas.width - size[0]) / 2 + slideDirection * canvas.width / 2 *  (fadeInTime / now), (canvas.height - size[1]) / 2, size[0], size[1]);
+                // how much of the slide has been performed, 0 for nothing 1 for all
+                var slideDone = clamp((now - fadeInTime) / slideTime, 0, 1);
+
+                log("slidedone: " + slideDone);
+                log("now - fadeInTime: " + (now - fadeInTime));
+
+                // perform the slide, a slide should be the total width of the canvas
+                x += (slideDirection * canvas.width) * (1 - smoothstep(slideDone));
+
+                c.drawImage(images[index].data, x, (canvas.height - size[1]) / 2, size[0], size[1]);
+
+                if(slideDone >= 1)
+                {
+                    slideComplete = true;
+                }
+
+                log("x: " + x);
             }
 
-            if((now - transitionStart) > 5)
+            if(slideComplete)
             {
                 transition = false;
                 // the transition is finished, call callback
@@ -239,15 +292,19 @@ function Slide(canvas, images)
         {
             commandQueue.pushCommand(function(callback)
                                      {
-                                         direction = directionEnum.FORWARD;
-                                         // load the next image
-                                         index = index < (images.length - 1) ? index + 1 : images.length - 1;
-                                         loadImageNumber(index);
-                                         // trigger transition
-                                         transitionStart = new Date().getTime();
-                                         // reset fadeInStart
-                                         fadeInStart = -1;
-                                         setTimeout(function(){render(callback);}, 0);
+                                         if(index < (images.length - 1))
+                                         {
+                                             direction = directionEnum.FORWARD;
+                                             // load the next image
+                                             index = index < (images.length - 1) ? index + 1 : images.length - 1;
+                                             loadImageNumber(index);
+                                             // trigger transition
+                                             transitionStart = new Date().getTime();
+                                             // reset fadeInStart
+                                             fadeInStart = -1;
+                                             fadeInTime = -1;
+                                             setTimeout(function(){render(callback);}, 0);
+                                         }
                                      });
         }
     }
@@ -258,13 +315,17 @@ function Slide(canvas, images)
         {
             commandQueue.pushCommand(function(callback)
                                      {
-                                         direction = directionEnum.BACKWARD;
-                                         index = index > 0 ? index - 1 : index;
-                                         loadImageNumber(index);
-                                         // trigger transition
-                                         transitionStart = new Date().getTime();
-                                         fadeInStart = -1;
-                                         setTimeout(function(){render(callback);}, 0);
+                                         if(index > 0)
+                                         {
+                                             direction = directionEnum.BACKWARD;
+                                             index = index > 0 ? index - 1 : index;
+                                             loadImageNumber(index);
+                                             // trigger transition
+                                             transitionStart = new Date().getTime();
+                                             fadeInStart = -1;
+                                             fadeInTime = -1;
+                                             setTimeout(function(){render(callback);}, 0);
+                                         }
                                      });
         }
     }
