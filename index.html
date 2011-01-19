@@ -1,4 +1,4 @@
-<html>
+<!DOCTYPE HTML><html>
 <head>
   <title>CanvasSlide test</title>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script> 
@@ -11,10 +11,17 @@
     slide = new Slide(document.getElementById("maincanvas"), [{url: "img/img0.jpg"}, {url: "img/img1.jpg"}, {url: "img/img2.jpg"}, {url: "img/img3.jpg"}, {url: "img/img4.jpg"}]);
     });
   </script>
+
+  <style type="text/css">
+    body { background-color: black; }
+    a { color: gray; }
+  </style>
 </head>
 <body>
-  <div id="canvasdiv"><canvas id="maincanvas" width="500" height="300"></canvas></div>
-  <div id="controldiv"><a href="javascript:slide.prev()">prev</a> <a href="javascript:slide.next()">next</a></div>
-  <div id="logdiv"></div>
+  <div style="width: 500px;">
+    <div id="canvasdiv"><canvas id="maincanvas" width="500" height="300"></canvas></div>
+    <div id="controldiv" style="text-align: center;"><a href="javascript:slide.prev()">prev</a><span style="margin-left: 20px;"></span><a href="javascript:slide.next()">next</a></div>
+    <div id="logdiv"></div>
+  </div>
 </body>
 </html>

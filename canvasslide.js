@@ -1,5 +1,5 @@
 // canvas slideshow
-
+// requires jquery
 
 /**
  * Create a slideshow on canvas using images.
@@ -16,8 +16,6 @@ function Slide(canvas, images)
         {
             var canvasdiv = $("#logdiv");
             if(canvasdiv.append) canvasdiv.prepend(message + "<br/>\n");
-            // TODO handle logging better, can you get file, line
-            // printouts? exceptions?
         }
     }
 
@@ -26,8 +24,6 @@ function Slide(canvas, images)
      */
     function assert(test)
     {
-        // TODO this is a stupid way to do assertions, we need proper
-        // error messages.
         if(!test) log("assertion error");
     }
 
@@ -64,7 +60,6 @@ function Slide(canvas, images)
                                      {
                                          setTimeout(function()
                                                     {
-                                                        // TODO problems with that here?
                                                         that.current = null;
                                                         handleCommand();
                                                     }, 0);
@@ -190,7 +185,6 @@ function Slide(canvas, images)
     {
         if(c)
         {
-            //document.writeln("rendering\n");
             var now = new Date().getTime();
 
             c.clearRect(0, 0, canvas.width, canvas.height);
@@ -207,9 +201,6 @@ function Slide(canvas, images)
             var slideDirection = direction == directionEnum.FORWARD ? 1 : -1;
 
             var slideComplete = false;
-
-            // TODO redo the slides so that they are performed using
-            // smoothstep and in a certain time interval
 
             // draw the old image slideout
             if(lastIndex >= 0)
@@ -285,6 +276,9 @@ function Slide(canvas, images)
         }
     }
 
+    /**
+     * Call this function to load and slide to the next image.
+     */
     that.next = function()
     {
         if(c)
@@ -304,10 +298,18 @@ function Slide(canvas, images)
                                              fadeInTime = -1;
                                              setTimeout(function(){render(callback);}, 0);
                                          }
+                                         else
+                                         {
+                                             // since the index we are out of bounds we call callback directly
+                                             callback();
+                                         }
                                      });
         }
     }
-
+    
+    /**
+     * Call this function to load and slide to the previous image.
+     */
     that.prev = function()
     {
         if(c)
@@ -324,6 +326,11 @@ function Slide(canvas, images)
                                              fadeInStart = -1;
                                              fadeInTime = -1;
                                              setTimeout(function(){render(callback);}, 0);
+                                         }
+                                         else
+                                         {
+                                             // since the index we are out of bounds we call callback directly
+                                             callback();
                                          }
                                      });
         }
