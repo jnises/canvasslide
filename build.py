@@ -97,7 +97,7 @@ if __name__ == "__main__":
     shutil.copytree('ui_img', outdir + '/ui_img')
     shutil.copytree('external', outdir + '/external')
     
-    templateConvert('index.html', outdir + '/index.html', {"IMAGEARRAY": '["' + '","'.join(imgarray) + '"]'})
+    templateConvert('index.html_template', outdir + '/index.html', {"IMAGEARRAY": '["' + '","'.join(imgarray) + '"]'})
 
 
     print "All done."
