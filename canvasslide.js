@@ -1,4 +1,8 @@
-// canvas slideshow
+/**
+ * @preserve Canvas slideshow
+ * Copyright 2011 Joel Nises
+ */
+
 // requires jquery
 
 /**
@@ -6,7 +10,9 @@
  */
 function Slide(canvas, images)
 {
+    /** @const */
     var enable_log = false;
+    
     /**
      * Log stuff.
      */
@@ -24,8 +30,29 @@ function Slide(canvas, images)
      */
     function assert(test)
     {
-        if(!test) log("assertion error");
+        if(enable_log)
+        {
+            if(!test) log("assertion error");
+        }
     }
+
+    // first convert simple images array to dictionary array
+    images = $.map(images, function(elem, idx)
+                   {
+                       if(typeof elem === "string")
+                       {
+                           return {url: elem};
+                       }
+                       else // assume it is already a dictionary
+                       {
+                           return elem;
+                       }
+                   });
+
+    // an image to display if we are unable to load a real image
+    // this image might not be loaded when a problem occurs, in which case no image will be drawn at all
+    var errorimg = new Image();
+    errorimg.src = "ui_img/broken.jpg";
 
     var that = this;
     var c = null;
@@ -90,7 +117,7 @@ function Slide(canvas, images)
 
             tmpim.onerror = function()
             {
-                callback(null);
+                callback({data: errorimg});
             }
 
             tmpim.src = img.url;
@@ -105,11 +132,9 @@ function Slide(canvas, images)
         loadImage(images[index], 
                   function(img)
                   {
-                      if(img)
-                      {
-                          images[index] = img;
-                      }
-                      else
+                      images[index] = img;
+
+                      if(!img.url)
                       {
                           log("error: no image found for index: " + index);
                       }
@@ -339,3 +364,7 @@ function Slide(canvas, images)
     // start rendering
     that.next();
 }
+
+
+// export some stuff to make sure closure doesn't remove it
+window["Slide"] = Slide;

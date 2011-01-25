@@ -8,19 +8,29 @@
     var slide;
     $(document).ready(function()
     {
-    slide = new Slide(document.getElementById("maincanvas"), [{url: "img/img0.jpg"}, {url: "img/img1.jpg"}, {url: "img/img2.jpg"}, {url: "img/img3.jpg"}, {url: "img/img4.jpg"}]);
+    //slide = new Slide(document.getElementById("maincanvas"), [{url: "img/img0.jpg"}, {url: "img/img1.jpg"}, {url: "img/img2.jpg"}, {url: "img/img3.jpg"}, {url: "img/img4.jpg"}]);
+    slide = new Slide(document.getElementById("maincanvas"), ["img/img0.jpg", "asdfjk", "img/img1.jpg", "img/img2.jpg", "img/img3.jpg", "img/img4.jpg"]);
     });
   </script>
 
   <style type="text/css">
-    body { background-color: black; }
-    a { color: gray; }
+    body 
+    { 
+    background-color: black; 
+    color: gray;
+    font-family: helvetiva, arial, sans-serif;
+    }
+    a 
+    { 
+    color: white; 
+    text-decoration: none;
+    }
   </style>
 </head>
 <body>
   <div style="width: 500px;">
     <div id="canvasdiv"><canvas id="maincanvas" width="500" height="300"></canvas></div>
-    <div id="controldiv" style="text-align: center;"><a href="javascript:slide.prev()">prev</a><span style="margin-left: 20px;"></span><a href="javascript:slide.next()">next</a></div>
+    <div id="controldiv" style="text-align: center;"><a href="javascript:slide.prev()">&lt; prev</a><span style="margin-left: 20px;"></span><a href="javascript:slide.next()">next &gt;</a></div>
     <div id="logdiv"></div>
   </div>
 </body>
