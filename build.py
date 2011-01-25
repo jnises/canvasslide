@@ -4,6 +4,9 @@ import os
 import os.path
 import shutil
 import Image
+import argparse
+import sys
+import string
 
 jquerySource = "http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"
 
@@ -54,25 +57,47 @@ def compressJavascript(infile, outfile):
 
 
 def rescaleImage(infile, outfile, maxsize):
+    '''
+    TODO this function should handle different max width and height
+    '''
     img = Image.open(infile)
     scale = float(max(img.size))
     size = (int(img.size[0] / scale * maxsize + 0.5), int(img.size[1] / scale * maxsize + 0.5))
-    img.resize(size, Image.ANTIALIAS).save(outfile)
+    print 'resizing %s' % infile
+    img.resize(size, Image.ANTIALIAS).save(outfile, quality = 85, optimize = True, progressive = True)
+
+
+def templateConvert(infile, outfile, mappings):
+    with open(infile, 'rb') as inf:
+        with open(outfile, 'wb') as outf:
+            outf.write(string.Template(inf.read()).safe_substitute(mappings))
 
 
 if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("--imgdir")
+    params = p.parse_args()
+    
+    if params.imgdir:
+        imgdir = params.imgdir
+    else:
+        imgdir = 'img'
+
     outdir = 'out'
     recreateDir(outdir)
     
     compressJavascript("canvasslide.js", outdir + '/canvasslide.js')
 
     mkdirMaybe(outdir + '/img')
-    for image in os.listdir('img'):
-        rescaleImage('img/' + image, outdir + '/img/' + image, 300)
+    imgarray = []
+    for image in os.listdir(imgdir):
+        rescaleImage(imgdir + '/' + image, outdir + '/img/' + image, 500)
+        imgarray.append('img/' + image)
 
     shutil.copytree('ui_img', outdir + '/ui_img')
     shutil.copytree('external', outdir + '/external')
-    shutil.copyfile('index.html', outdir + '/index.html')
+    
+    templateConvert('index.html', outdir + '/index.html', {"IMAGEARRAY": '["' + '","'.join(imgarray) + '"]'})
 
 
     print "All done."
