@@ -8,7 +8,7 @@
 /**
  * Create a slideshow on canvas using images.
  */
-function Slide(canvas, images)
+function Slide(canvas, images, errorimgurl)
 {
     /** @const */
     var enable_log = false;
@@ -36,6 +36,9 @@ function Slide(canvas, images)
         }
     }
 
+    // default argument for errorimgurl
+    errorimgurl = typeof(errorimgurl) === "undefined" ? "ui_img/broken.jpg" : errorimgurl;
+
     // first convert simple images array to dictionary array
     images = $.map(images, function(elem, idx)
                    {
@@ -52,7 +55,7 @@ function Slide(canvas, images)
     // an image to display if we are unable to load a real image
     // this image might not be loaded when a problem occurs, in which case no image will be drawn at all
     var errorimg = new Image();
-    errorimg.src = "ui_img/broken.jpg";
+    errorimg.src = errorimgurl;
 
     var that = this;
     var c = null;
