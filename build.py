@@ -8,7 +8,7 @@ import argparse
 import sys
 import string
 
-jquerySource = "http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"
+jquerySource = "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"
 
 def mkdirMaybe(name):
     """
@@ -26,6 +26,7 @@ def recreateDir(name):
     if os.path.exists(name):
         shutil.rmtree(name)
         os.makedirs(name)
+
 
 def forceOpen(name, mode = "rb"):
     """
